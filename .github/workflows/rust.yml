@@ -1,0 +1,54 @@
+name: Rust Windows Build on Tag
+
+on:
+  push:
+    tags:
+      - 'v*'  # 匹配以 'v' 开头的标签，例如 v1.0.0
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Rust (Nightly)
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly
+        override: true
+
+    - name: Cache Cargo registry
+      uses: actions/cache@v3
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-registry-
+
+    - name: Cache Cargo build
+      uses: actions/cache@v3
+      with:
+        path: target
+        key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-build-
+
+    - name: Build for Windows
+      run: cargo build --release
+
+    - name: Rename the executable
+      shell: pwsh
+      run: |
+        $exePath = "target/release/osu-lazer-space-statistics .exe"
+        $newExePath = "target/release/osu-lazer-space-statistics _${{ github.ref_name }}.exe"
+        Move-Item -Path $exePath -Destination $newExePath
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: osu-lazer-space-statistics _${{ github.ref_name }}.exe
+        path: target/release/osu-lazer-space-statistics _${{ github.ref_name }}.exe
