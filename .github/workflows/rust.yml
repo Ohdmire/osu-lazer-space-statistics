@@ -43,12 +43,12 @@ jobs:
     - name: Rename the executable
       shell: pwsh
       run: |
-        $exePath = "target/release/osu-lazer-space-statistics .exe"
-        $newExePath = "target/release/osu-lazer-space-statistics _${{ github.ref_name }}.exe"
+        $exePath = "target/release/osu-lazer-space-statistics.exe"
+        $newExePath = "target/release/osu-lazer-space-statistics_${{ github.ref_name }}.exe"
         Move-Item -Path $exePath -Destination $newExePath
 
     - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
-        name: osu-lazer-space-statistics _${{ github.ref_name }}.exe
-        path: target/release/osu-lazer-space-statistics _${{ github.ref_name }}.exe
+        name: osu-lazer-space-statistics_${{ github.ref_name }}.exe
+        path: target/release/osu-lazer-space-statistics_${{ github.ref_name }}.exe
