@@ -10,9 +10,9 @@ use rayon::prelude::*;
 
 fn main() {
 
-    let target_folder = get_lazer_location().unwrap_or_else(|| { String::from("") });
+    let target_folder = get_lazer_location();
 
-    println!("从 storage.ini 读取的路径: {}", target_folder);
+    println!("读取的osu路径为: {}", target_folder);
 
     println!("正在统计文件大小...");
 
@@ -28,17 +28,15 @@ fn main() {
 
 }
 
+fn get_appdata_roaming() -> String {
+    env::var("APPDATA").expect("$APPDATA不存在")
+}
+
 /// 获取lazer的路径
-fn get_lazer_location() -> Option<String> {
+fn get_lazer_location() -> String {
 
     // 获取当前用户的 AppData\Roaming 路径
-    let appdata_roaming = match env::var("APPDATA") {
-        Ok(path) => path,
-        Err(_) => {
-            eprintln!("无法获取 AppData\\Roaming 路径。");
-            return None;
-        }
-    };
+    let appdata_roaming = get_appdata_roaming();
 
     // 构建 storage.ini 文件的路径
     let storage_ini_path = Path::new(&appdata_roaming).join("osu").join("storage.ini");
@@ -46,13 +44,19 @@ fn get_lazer_location() -> Option<String> {
     // 读取 storage.ini 文件内容
     let target_folder = match read_storage_ini(&storage_ini_path) {
         Ok(path) => path,
-        Err(err) => {
-            eprintln!("读取 storage.ini 文件失败: {}", err);
-            return None;
+        Err(_) => {
+            println!("读取 storage.ini 文件失败");
+            println!("请手动输入文件夹例如D:\\osu\n留空则尝试默认文件夹");
+            let mut input = String::new();
+            io::stdin().read_line(&mut input).expect("");
+            if input.trim().to_string().is_empty(){
+                return Path::new(&appdata_roaming).join("osu").to_string_lossy().into_owned();
+            }
+            else { input.trim().to_string() }
         }
     };
 
-    Some(target_folder)
+    target_folder
 
 }
 
@@ -75,6 +79,7 @@ fn format_size(size: u64) -> String {
 
 /// 读取 storage.ini 文件并解析目标路径
 fn read_storage_ini(path: &Path) -> io::Result<String> {
+
     let file = fs::File::open(path)?;
     let reader = io::BufReader::new(file);
 
