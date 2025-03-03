@@ -1,8 +1,21 @@
 [package]
 name = "osu-lazer-space-statistics"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
+authors = ["Ohdmire<ATRI1024@proton.me>"]
+description = "计算osu-lazer实际占用空间"
+license = "GPL-3.0"
+repository = "https://github.com/Ohdmire/osu-lazer-space-statistics"
+keywords = ["osu", "lazer"]  # 可选，用于搜索
+
+[dev-dependencies]
+criterion = "0.5.1"
+
+[[bench]]
+name = "main_test"
+harness = false
 
 [dependencies]
 
-#![feature(windows_by_handle)]
+walkdir = "2.5.0"
+rayon = "1.10.0"

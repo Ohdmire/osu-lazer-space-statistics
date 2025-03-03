@@ -5,6 +5,8 @@ use std::fs;
 use std::io::{self, BufRead};
 use std::os::windows::fs::MetadataExt;
 use std::path::Path;
+use walkdir::WalkDir;
+use rayon::prelude::*;
 
 fn main() {
 
@@ -87,45 +89,57 @@ fn read_storage_ini(path: &Path) -> io::Result<String> {
     }
 }
 
-/// 统计文件夹大小（包含硬链接和不包含硬链接）
-fn calculate_folder_size(folder: &str) -> (u64, u64) {
-    let mut total_size_with_hardlinks = 0;
-    let mut total_size_without_hardlinks = 0;
-
-    if let Ok(entries) = fs::read_dir(folder) {
-        for entry in entries {
-            if let Ok(entry) = entry {
-                let path = entry.path();
-                if path.is_dir() {
-                    // 递归处理子文件夹
-                    let (sub_with_hardlinks, sub_without_hardlinks) = calculate_folder_size(&path.to_string_lossy());
-                    total_size_with_hardlinks += sub_with_hardlinks;
-                    total_size_without_hardlinks += sub_without_hardlinks;
-                } else if path.is_file() {
-                    // 获取文件大小
-                    if let Ok(metadata) = fs::metadata(&path) {
-                        let file_size = metadata.file_size();
-                        total_size_with_hardlinks += file_size;
-
-                        // 检查文件是否是硬链接
-                        if !is_hard_link(&path) {
-                            total_size_without_hardlinks += file_size;
-                        }
-                    }
-                }
-            }
+/// 文件元数据struct
+#[derive(Debug)]
+struct FileMetadata {
+    size: u64,           // 文件大小
+    is_hard_link: bool,  // 是否是硬链接
+}
+impl FileMetadata {
+    /// 从路径获取文件元数据
+    fn from_path(path: &Path) -> Option<Self> {
+        if let Ok(metadata) = fs::metadata(path) {
+            let size = metadata.len();
+            let is_hard_link = metadata.number_of_links().unwrap_or(1) > 1;
+            Some(Self { size, is_hard_link })
+        } else {
+            None
         }
     }
-
-    (total_size_with_hardlinks, total_size_without_hardlinks)
 }
 
-/// 检查文件是否是硬链接
-fn is_hard_link(path: &Path) -> bool {
-    if let Ok(metadata) = fs::metadata(path) {
-        // 在 Windows 上，硬链接的文件具有多个硬链接计数
-        metadata.number_of_links() > Some(1)
-    } else {
-        false
-    }
+/// 统计文件夹大小（包含硬链接和不包含硬链接）
+fn calculate_folder_size(folder: &str) -> (u64, u64) {
+    // 使用 WalkDir 递归遍历文件夹
+    let entries: Vec<_> = WalkDir::new(folder)
+        .into_iter()
+        .filter_map(|e| e.ok()) // 过滤掉错误的条目
+        .collect();
+
+    // 使用 rayon 并行处理文件
+    let results: Vec<_> = entries
+        .par_iter() // 并行迭代
+        .filter(|entry| entry.path().is_file()) // 判断文件
+        .filter_map(|entry| FileMetadata::from_path(entry.path())) // 获取元数据
+        .map(|metadata| (metadata.size, !metadata.is_hard_link)) // 映射为 (size, is_not_hard_link)
+        .collect();
+
+    // 汇总结果
+    let (total_size_with_hardlinks, total_size_without_hardlinks) = results
+        .into_par_iter() // 并行汇总
+        .fold(
+            || (0, 0), // 初始值
+            |(acc_with, acc_without), (size, is_not_hardlink)| {
+                (
+                    acc_with + size,
+                    acc_without + if is_not_hardlink { size } else { 0 },
+                )
+            },
+        )
+        .reduce(
+            || (0, 0), // 初始值
+            |(a_with, a_without), (b_with, b_without)| (a_with + b_with, a_without + b_without),
+        );
+
+    (total_size_with_hardlinks, total_size_without_hardlinks)
 }
