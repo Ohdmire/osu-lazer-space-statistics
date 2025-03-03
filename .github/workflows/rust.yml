@@ -46,10 +46,17 @@ jobs:
         $exePath = "target/release/osu-lazer-space-statistics.exe"
         $newExePath = "target/release/osu-lazer-space-statistics_${{ github.ref_name }}.exe"
         Move-Item -Path $exePath -Destination $newExePath
+        
+    - name: Upload Rust artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: osu-lazer-space-statistics_${{ github.ref_name }}.exe
+        path: |
+          target/release/osu-lazer-space-statistics_${{ github.ref_name }}.exe
 
     - name: Create Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         name: Release ${{ github.ref_name }}
         files: |
-          target/release/osu-lazer-space-statistics_${{ github.ref_name }}.exe
+          osu-lazer-space-statistics_${{ github.ref_name }}.exe
