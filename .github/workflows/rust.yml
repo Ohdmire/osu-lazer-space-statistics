@@ -47,20 +47,9 @@ jobs:
         $newExePath = "target/release/osu-lazer-space-statistics_${{ github.ref_name }}.exe"
         Move-Item -Path $exePath -Destination $newExePath
 
-    - name: Create GitHub Release
-      id: create_release
-      uses: actions/create-release@v2
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
       with:
-        tag_name: ${{ github.ref_name }}  # 使用标签名称作为 Release 的标签
-        release_name: Release ${{ github.ref_name }}  # Release 的名称
-        draft: false
-        prerelease: false
-        generate_release_notes: true  # 自动生成 Release Notes
-
-    - name: Upload executable to Release
-      uses: actions/upload-release-asset@v2
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}  # 从创建 Release 的步骤中获取上传 URL
-        asset_path: target/release/osu-lazer-space-statistics_${{ github.ref_name }}.exe  # 要上传的文件路径
-        asset_name: osu-lazer-space-statistics_${{ github.ref_name }}.exe  # 上传后的文件名
-        asset_content_type: application/octet-stream  # 文件类型
+        name: Release ${{ github.ref_name }}
+        files: |
+          osu-lazer-space-statistics_${{ github.ref_name }}.exe
