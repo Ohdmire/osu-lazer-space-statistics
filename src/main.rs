@@ -26,6 +26,7 @@ fn main() {
 
 }
 
+/// 获取lazer的路径
 fn get_lazer_location() -> Option<String> {
 
     // 获取当前用户的 AppData\Roaming 路径
@@ -53,7 +54,7 @@ fn get_lazer_location() -> Option<String> {
 
 }
 
-/// 将字节大小格式化为最大的单位（如 1.2G、3.8M）
+/// 将字节大小格式化为最大的单位（如 1.2G、2.4M）
 fn format_size(size: u64) -> String {
     const KB: u64 = 1024;
     const MB: u64 = 1024 * KB;
