@@ -83,15 +83,22 @@ fn read_storage_ini(path: &Path) -> io::Result<String> {
     let file = fs::File::open(path)?;
     let reader = io::BufReader::new(file);
 
-    // 读取文件的第一行
-    if let Some(first_line) = reader.lines().next() {
-        let line = first_line?;
-        // 路径在第一行
-        let line = line.split('=').nth(1).unwrap().trim().to_string(); // 提取并去除空格
-        Ok(line)
-    } else {
-        Err(io::Error::new(io::ErrorKind::InvalidData, "storage.ini 文件为空"))
+    for line in reader.lines() {
+        let line = line?;
+        // 检查是否以 "FullPath" 开头
+        if line.starts_with("FullPath") {
+            // 提取 "=" 后面的部分，并去除空格
+            if let Some(full_path) = line.split('=').nth(1) {
+                return Ok(full_path.trim().to_string());
+            }
+        }
     }
+
+    // 如果没有找到 "FullPath"，返回错误
+    Err(io::Error::new(
+        io::ErrorKind::InvalidData,
+        "未找到 FullPath",
+    ))
 }
 
 /// 文件元数据struct
