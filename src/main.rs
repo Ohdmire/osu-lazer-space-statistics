@@ -6,13 +6,14 @@ use std::io::{self, BufRead};
 use std::os::windows::fs::MetadataExt;
 use std::path::Path;
 
-fn main() {
+fn get_lazer_location() -> Option<String> {
+
     // 获取当前用户的 AppData\Roaming 路径
     let appdata_roaming = match env::var("APPDATA") {
         Ok(path) => path,
         Err(_) => {
             eprintln!("无法获取 AppData\\Roaming 路径。");
-            return;
+            return None;
         }
     };
 
@@ -24,11 +25,21 @@ fn main() {
         Ok(path) => path,
         Err(err) => {
             eprintln!("读取 storage.ini 文件失败: {}", err);
-            return;
+            return None;
         }
     };
 
+    Some(target_folder)
+
+}
+
+fn main() {
+
+    let target_folder = get_lazer_location().unwrap_or_else(|| { String::from("") });
+
     println!("从 storage.ini 读取的路径: {}", target_folder);
+
+    println!("正在统计文件大小...");
 
     // 统计文件夹大小（包含硬链接和不包含硬链接）
     let (total_size_with_hardlinks, total_size_without_hardlinks) = calculate_folder_size(&target_folder);
@@ -36,6 +47,9 @@ fn main() {
     // 打印最大的单位
     println!("统计总大小（包含硬链接）: {}", format_size(total_size_with_hardlinks));
     println!("实际总大小（排除硬链接）: {}", format_size(total_size_without_hardlinks));
+
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).expect("");
 
 }
 
