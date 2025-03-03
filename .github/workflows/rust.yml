@@ -52,4 +52,4 @@ jobs:
       with:
         name: Release ${{ github.ref_name }}
         files: |
-          osu-lazer-space-statistics_${{ github.ref_name }}.exe
+          target/release/osu-lazer-space-statistics_${{ github.ref_name }}.exe
