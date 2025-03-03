@@ -50,7 +50,7 @@ jobs:
     - name: Upload Rust artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: osu-lazer-space-statistics_${{ github.ref_name }}.exe
+        name: osu-lazer-space-statistics_${{ github.ref_name }}_windows
         path: |
           target/release/osu-lazer-space-statistics_${{ github.ref_name }}.exe
 
@@ -59,4 +59,4 @@ jobs:
       with:
         name: Release ${{ github.ref_name }}
         files: |
-          osu-lazer-space-statistics_${{ github.ref_name }}.exe
+          osu-lazer-space-statistics_${{ github.ref_name }}_windows.zip
