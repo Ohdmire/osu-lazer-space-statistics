@@ -48,7 +48,7 @@ jobs:
         Move-Item -Path $exePath -Destination $newExePath
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: osu-lazer-space-statistics_${{ github.ref_name }}.exe
         path: target/release/osu-lazer-space-statistics_${{ github.ref_name }}.exe
